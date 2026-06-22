@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "@react-pdf/renderer": "^4.5.1",
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-mysql-session": "^3.0.3",
+    "express-session": "^1.19.0",
+    "mysql2": "^3.22.4",
+    "react-router-dom": "^7.15.1"
+  }
+}

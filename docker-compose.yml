@@ -1,0 +1,25 @@
+services:
+  # 1. TU SERVIDOR BACKEND (Node.js + MySQL)
+  backend:
+    image: node:20
+    container_name: iemi-backend
+    working_dir: /app
+    ports:
+      - "3005:3000" 
+    volumes:
+      - .:/app
+    command: sh -c "npm install dotenv express cors mysql2 express-session express-mysql-session bcryptjs compression && node server.js"
+    restart: unless-stopped
+
+  # 2. TU INTERFAZ FRONTEND (React + Vite)
+  frontend:
+    build: .
+    container_name: iemi-frontend
+    ports:
+      - "5000:5173" 
+    volumes:
+      - .:/app
+      - /app/front-proformas/node_modules
+    depends_on:
+      - backend
+    restart: unless-stopped
