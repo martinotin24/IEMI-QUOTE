@@ -92,6 +92,8 @@ app.post('/api/login', async (req, res) => {
     req.session.userId = user.id;
     req.session.save(() => res.json({ message: 'Autenticación exitosa' }));
   } catch (error) {
+    // ESTA LÍNEA ES LA QUE NOS DIRÁ LA VERDAD:
+    console.error("🔴 ERROR AL CONECTAR/LOGIN:", error); 
     res.status(500).json({ message: 'Error del servidor' });
   } finally {
     if (conn) conn.release();
@@ -118,16 +120,37 @@ app.get('/api/next-proforma-id', async (req, res) => {
   let conn;
   try {
     conn = await pool.getConnection();
+    
+    // 1. Obtener el año actual dinámicamente (ej. de 2026 saca "26")
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    const yearCode = `0${currentYear}`; // Resultado: "026"
+
     const [rows] = await conn.execute("SELECT id FROM proformas ORDER BY id DESC LIMIT 1");
+    
     if (rows.length > 0) {
       let parts = rows[0].id.split("-");
-      let nextNumber = parseInt(parts[2], 10) + 1;
-      res.json({ nextId: `${parts[0]}-${parts[1]}-${nextNumber}` });
+      let dbYear = parts[1]; // Año de la última proforma registrada
+      
+      let nextNumber;
+      if (dbYear === yearCode) {
+        // Seguimos en el mismo año, sumamos 1 al número
+        nextNumber = parseInt(parts[2], 10) + 1;
+      } else {
+        // ¡Cambio de año! El contador vuelve a empezar en 1 (ej. A-026-1)
+        nextNumber = 1; 
+      }
+
+      res.json({ nextId: `A-${yearCode}-${nextNumber}` });
     } else {
-      res.json({ nextId: "A-025-351" });
+      // Si la base de datos estuviera vacía
+      res.json({ nextId: `A-${yearCode}-1` });
     }
-  } catch (error) { res.status(500).json({ message: "Error" });
-  } finally { if (conn) conn.release(); }
+  } catch (error) { 
+    console.error("Error generando ID:", error);
+    res.status(500).json({ message: "Error" });
+  } finally { 
+    if (conn) conn.release(); 
+  }
 });
 
 app.get('/api/proforma/:id', async (req, res) => {
