@@ -22,3 +22,4 @@ jobs:
             cd /var/www/IEMI
             git pull origin main
             docker-compose up -d --build
+            sudo systemctl restart nginx

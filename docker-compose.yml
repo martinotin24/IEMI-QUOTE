@@ -6,6 +6,8 @@ services:
     working_dir: /app
     ports:
       - "3005:3000" 
+    environment:
+    - DB_PASSWORD=${DB_PASSWORD}
     volumes:
       - .:/app
     command: sh -c "npm install dotenv express cors mysql2 express-session express-mysql-session bcryptjs compression && node server.js"
