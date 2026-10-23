@@ -242,47 +242,6 @@ app.delete("/api/clientes/:id", async (req, res) => {
   } catch (error) { res.status(500).json({ error: "Error" }); }
 });
 
-// -------------------- SCRIPT DE ACTUALIZACIÓN DE PROFORMAS 2026 --------------------
-app.get('/api/fix-2026', async (req, res) => {
-  let conn;
-  try {
-    conn = await pool.getConnection();
-    // Apagamos la validación de llaves foráneas temporalmente
-    await conn.query('SET FOREIGN_KEY_CHECKS=0;');
-    
-    // Obtenemos todas las proformas del 2026
-    const [rows] = await conn.query("SELECT id FROM proformas WHERE date >= '2026-01-01' ORDER BY date ASC, id ASC");
-    
-    // PASO 1: Cambiamos a nombres temporales (ej. TEMP-026-001)
-    let counter = 1;
-    for (let row of rows) {
-      const oldId = row.id;
-      const tempId = `TEMP-026-${String(counter).padStart(3, '0')}`;
-      
-      await conn.query('UPDATE productos SET proforma_id = ? WHERE proforma_id = ?', [tempId, oldId]);
-      await conn.query('UPDATE proformas SET id = ? WHERE id = ?', [tempId, oldId]);
-      
-      row.tempId = tempId; 
-      row.finalId = `A-026-${String(counter).padStart(3, '0')}`;
-      counter++;
-    }
-    
-    // PASO 2: Asignamos el nombre definitivo (ej. A-026-001)
-    for (let row of rows) {
-      await conn.query('UPDATE productos SET proforma_id = ? WHERE proforma_id = ?', [row.finalId, row.tempId]);
-      await conn.query('UPDATE proformas SET id = ? WHERE id = ?', [row.finalId, row.tempId]);
-    }
-
-    // Volvemos a encender la seguridad
-    await conn.query('SET FOREIGN_KEY_CHECKS=1;');
-    res.json({ message: `¡Éxito! Se actualizaron y re-enumeraron ${rows.length} proformas del 2026 perfectamente.` });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Hubo un error actualizando" });
-  } finally {
-    if (conn) conn.release();
-  }
-});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Servidor IEMI en puerto ${PORT}`));
